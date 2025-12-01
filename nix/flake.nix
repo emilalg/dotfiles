@@ -1,5 +1,5 @@
 {
-  description = "My unified nix-darwin + home-manager configuration";
+  description = "Unified Emil's Nix Config (Darwin + WSL)";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
@@ -9,59 +9,56 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nix-darwin, nixpkgs, home-manager }:
+  outputs = { self, nixpkgs, nix-darwin, home-manager, ... }@inputs:
+  let
+    # --- CONFIGURATION VARIABLES ---
+    macUser = "emilalg";
+    wslUser = "velho"; # Your specific WSL username here
+    # -------------------------------
+  in
   {
-    darwinConfigurations."Emils-MacBook-Air" = nix-darwin.lib.darwinSystem {
-      modules = [
-        # Main system configuration
-        ({ pkgs, ... }: {
-          # List packages installed in system profile
-          environment.systemPackages = with pkgs; [
-            vim
-          ];
-
-          # NOTE: Removed services.nix-daemon.enable = true; as it's deprecated
-          # nix-darwin now manages nix-daemon automatically when nix.enable is on
-          
-	  nixpkgs.config.allowUnfree = true;
-
-          # Necessary for using flakes on this system
-          nix.settings.experimental-features = "nix-command flakes";
-
-          # Create /etc/zshrc that loads the nix-darwin environment
-          programs.zsh.enable = true;
-
-          security.pam.services.sudo_local.touchIdAuth = true;
-
-          # Set Git commit hash for darwin-version
-          system.configurationRevision = self.rev or self.dirtyRev or null;
-
-          # Used for backwards compatibility, please read the changelog before changing
-          system.stateVersion = 4;
-
-          # The platform the configuration will be used on
-          nixpkgs.hostPlatform = "aarch64-darwin";
-
-          # Define your user
-          users.users.emilalg = {
-            name = "emilalg";
-            home = "/Users/emilalg";
-          };
-
-          # Fix GID mismatch for build users
-          ids.gids.nixbld = 350;
-        })
-
-        # Home Manager configuration
-        home-manager.darwinModules.home-manager
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.users.emilalg = import ./home.nix;
-        }
-      ];
+    # 1. MacOS Configuration
+    darwinConfigurations = {
+      "Emils-MacBook-Air" = nix-darwin.lib.darwinSystem {
+        system = "aarch64-darwin";
+        
+        # Pass the MAC user to the modules
+        specialArgs = { inherit inputs; user = macUser; };
+        
+        modules = [ 
+          ./hosts/macbook/default.nix
+          home-manager.darwinModules.home-manager {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            
+            # Pass the MAC user to Home Manager module
+            home-manager.extraSpecialArgs = { inherit inputs; user = macUser; };
+            
+            # Key must match the actual username
+            home-manager.users.${macUser} = import ./home/default.nix;
+          }
+        ];
+      };
     };
-    
-    darwinPackages = self.darwinConfigurations."Emils-MacBook-Air".pkgs;
+
+    # 2. WSL Configuration
+    homeConfigurations = {
+      "wsl" = home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        
+        # Pass the WSL user to the modules
+        extraSpecialArgs = { inherit inputs; user = wslUser; };
+        
+        modules = [ 
+          ./home/default.nix 
+          {
+            # Explicitly force the WSL identity
+            home.username = wslUser;
+            home.homeDirectory = "/home/${wslUser}";
+            targets.genericLinux.enable = true;
+          }
+        ];
+      };
+    };
   };
 }
