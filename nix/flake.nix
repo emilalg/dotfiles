@@ -11,13 +11,24 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
 
+  # --- UPDATED CACHE CONFIG (CRITICAL) ---
+  nixConfig = {
+    extra-substituters = [
+      "https://nix-community.cachix.org"
+      "https://cache.nixos-cuda.org" # <--- NEW URL
+    ];
+    extra-trusted-public-keys = [
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+      "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M=" # <--- NEW KEY
+    ];
+  };
+
   outputs = { self, nixpkgs, nix-darwin, home-manager, ... }@inputs:
   let
     macUser = "emilalg";
-    wslUser = "velho"; # Updated with your actual WSL username
+    wslUser = "velho";
   in
   {
-    # --- BLOCK 1: MAC CONFIGURATION ---
     darwinConfigurations = {
       "Emils-MacBook-Air" = nix-darwin.lib.darwinSystem {
         system = "aarch64-darwin";
@@ -32,16 +43,17 @@
           }
         ];
       };
-    }; # <--- Ensure this bracket closes darwinConfigurations
+    };
 
-    # --- BLOCK 2: WSL CONFIGURATION ---
     homeConfigurations = {
       "wsl" = home-manager.lib.homeManagerConfiguration {
-
+        # Keep cudaSupport = true, now that we have the right cache
         pkgs = import nixpkgs {
           system = "x86_64-linux";
-          config.allowUnfree = true;
-          cudaSupport = true;
+          config = {
+            allowUnfree = true;
+            cudaSupport = true;
+          };
         };
 
         extraSpecialArgs = { inherit inputs; user = wslUser; };
@@ -54,7 +66,6 @@
           }
         ];
       };
-    }; # <--- Ensure this bracket closes homeConfigurations
-
-  }; # <--- Ensure this closes 'outputs'
+    };
+  };
 }

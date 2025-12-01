@@ -55,6 +55,14 @@ in
         . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
       fi
 
+      ${lib.optionalString isLinux ''
+        # 1. The Wiki explicitly says to prefix /usr/lib/wsl/lib
+        export LD_LIBRARY_PATH=/usr/lib/wsl/lib:$LD_LIBRARY_PATH
+        
+        # 2. Also ensure standard binaries (nvidia-smi) are in path
+        export PATH=/usr/lib/wsl/lib:$PATH
+      ''}
+
       # Add VS Code (Mac only)
       ${lib.optionalString isDarwin ''export PATH="/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"''}
     '';
