@@ -27,6 +27,9 @@ in
     ripgrep
     jq
     fzf # Fuzzy finder (must have)
+
+    # gpu
+    nvtopPackages.nvidia
   ];
 
   # --- SHELL CONFIGURATION ---
