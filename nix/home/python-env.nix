@@ -38,12 +38,12 @@ in
   home.packages = [ pythonDataScience ];
 
   home.sessionVariables = {
-    # Ensure Jupyter can find the kernels
+    # 1. Common Variables (Mac + WSL)
     JUPYTER_PATH = "${config.home.homeDirectory}/.local/share/jupyter";
-    
-    # Mac Optimization Flags
-    PYTORCH_ENABLE_MPS_FALLBACK = lib.mkIf isDarwin "1";
     JAX_ENABLE_X64 = "1";
+  } // lib.optionalAttrs isDarwin {
+    # 2. Mac-Only Variables (Merged in only if on Mac)
+    PYTORCH_ENABLE_MPS_FALLBACK = "1";
   };
 
   home.shellAliases = {
