@@ -11,54 +11,42 @@
 
   outputs = { self, nixpkgs, nix-darwin, home-manager, ... }@inputs:
   let
-    # --- CONFIGURATION VARIABLES ---
     macUser = "emilalg";
-    wslUser = "velho"; # Your specific WSL username here
-    # -------------------------------
+    wslUser = "velho"; # Updated with your actual WSL username
   in
   {
-    # 1. MacOS Configuration
+    # --- BLOCK 1: MAC CONFIGURATION ---
     darwinConfigurations = {
       "Emils-MacBook-Air" = nix-darwin.lib.darwinSystem {
         system = "aarch64-darwin";
-        
-        # Pass the MAC user to the modules
         specialArgs = { inherit inputs; user = macUser; };
-        
         modules = [ 
           ./hosts/macbook/default.nix
           home-manager.darwinModules.home-manager {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            
-            # Pass the MAC user to Home Manager module
             home-manager.extraSpecialArgs = { inherit inputs; user = macUser; };
-            
-            # Key must match the actual username
             home-manager.users.${macUser} = import ./home/default.nix;
           }
         ];
       };
-    };
+    }; # <--- Ensure this bracket closes darwinConfigurations
 
-    # 2. WSL Configuration
+    # --- BLOCK 2: WSL CONFIGURATION ---
     homeConfigurations = {
       "wsl" = home-manager.lib.homeManagerConfiguration {
         pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        
-        # Pass the WSL user to the modules
         extraSpecialArgs = { inherit inputs; user = wslUser; };
-        
         modules = [ 
           ./home/default.nix 
           {
-            # Explicitly force the WSL identity
             home.username = wslUser;
             home.homeDirectory = "/home/${wslUser}";
             targets.genericLinux.enable = true;
           }
         ];
       };
-    };
-  };
+    }; # <--- Ensure this bracket closes homeConfigurations
+
+  }; # <--- Ensure this closes 'outputs'
 }
