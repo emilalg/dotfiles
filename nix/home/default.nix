@@ -3,6 +3,9 @@
 let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
+  
+  # The path to your config
+  configDir = "~/.config/nix";
 in
 {
   # Import your Python Module
@@ -16,9 +19,8 @@ in
   # Packages installed on BOTH Mac and WSL
   home.packages = with pkgs; [
     git
-    nodejs_22 # Latest stable
+    nodejs_22
     pyright
-    # Add system monitors, etc.
     btop
     ripgrep
     jq
@@ -32,13 +34,20 @@ in
     
     shellAliases = {
       ll = "ls -l";
-      # Update command adapts to OS
+      
+      # --- ROBUST UPDATE COMMAND ---
+      # 1. Navigates to config dir via 'git -C'
+      # 2. Stages all new files (fixes the "missing attribute" error)
+      # 3. Rebuilds the system based on OS
       update = if isDarwin 
-        then "darwin-rebuild switch --flake ~/.config/nix"
-        else "home-manager switch --flake ~/.config/nix#wsl";
+        then "git -C ${configDir} add . && darwin-rebuild switch --flake ${configDir}"
+        else "git -C ${configDir} add . && home-manager switch --flake ${configDir}#wsl";
+        
+      # Optional: Command to strictly update versions (flake.lock)
+      upgrade = "nix flake update --flake ${configDir} && update";
     };
 
-    initExtra = ''
+    initContent = ''
       # Add VS Code to path (Mac specific)
       ${lib.optionalString isDarwin ''export PATH="/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"''}
     '';
