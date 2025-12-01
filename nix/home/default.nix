@@ -18,7 +18,6 @@ in
     git
     nodejs_22 # Latest stable
     pyright
-    ngrok
     # Add system monitors, etc.
     btop
     ripgrep

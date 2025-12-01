@@ -35,7 +35,12 @@
     # --- BLOCK 2: WSL CONFIGURATION ---
     homeConfigurations = {
       "wsl" = home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+
+        pkgs = import nixpkgs {
+          system = "x86_64-linux";
+          config.allowUnfree = true;
+        };
+
         extraSpecialArgs = { inherit inputs; user = wslUser; };
         modules = [ 
           ./home/default.nix 
