@@ -49,7 +49,7 @@ in
     };
 
     # Fix Path logic on WSL so 'home-manager' command is found
-    initExtra = ''
+    initContent = ''
       # Source Nix environment
       if [ -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
         . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
