@@ -3,54 +3,72 @@
 let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
-  
-  # The path to your config
   configDir = "~/.config/nix";
 in
 {
-  # Import your Python Module
   imports = [ ./python-env.nix ];
 
-  # Basic Info
   home.username = lib.mkDefault user;
   home.homeDirectory = lib.mkDefault (if isDarwin then "/Users/${user}" else "/home/${user}");
   home.stateVersion = "24.05"; 
 
-  # Packages installed on BOTH Mac and WSL
   home.packages = with pkgs; [
+    # Core
     git
-    nodejs_22
+    home-manager # <--- Installs the CLI tool explicitly
+    
+    # Dev
+    nodejs_24
     pyright
+    bun
+    
+    # Utils
     btop
     ripgrep
     jq
+    fzf # Fuzzy finder (must have)
   ];
 
-  # Program Configuration
+  # --- SHELL CONFIGURATION ---
   programs.zsh = {
     enable = true;
     autosuggestion.enable = true;
     enableCompletion = true;
-    
+    syntaxHighlighting.enable = true; # <--- Makes commands green/red while typing
+
     shellAliases = {
       ll = "ls -l";
-      
-      # --- ROBUST UPDATE COMMAND ---
-      # 1. Navigates to config dir via 'git -C'
-      # 2. Stages all new files (fixes the "missing attribute" error)
-      # 3. Rebuilds the system based on OS
+      # Robust update command
       update = if isDarwin 
         then "git -C ${configDir} add . && darwin-rebuild switch --flake ${configDir}"
         else "git -C ${configDir} add . && home-manager switch --flake ${configDir}#wsl";
-        
-      # Optional: Command to strictly update versions (flake.lock)
       upgrade = "nix flake update --flake ${configDir} && update";
     };
 
-    initContent = ''
-      # Add VS Code to path (Mac specific)
+    # Fix Path logic on WSL so 'home-manager' command is found
+    initExtra = ''
+      # Source Nix environment
+      if [ -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
+        . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+      fi
+
+      # Add VS Code (Mac only)
       ${lib.optionalString isDarwin ''export PATH="/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"''}
     '';
+  };
+
+  # --- PRETTY PROMPT (STARSHIP) ---
+  programs.starship = {
+    enable = true;
+    enableZshIntegration = true;
+    settings = {
+      add_newline = true;
+      # Customizing the look slightly
+      character = {
+        success_symbol = "[➜](bold green)";
+        error_symbol = "[➜](bold red)";
+      };
+    };
   };
 
   programs.direnv = {
