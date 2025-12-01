@@ -1,2 +1,4 @@
 direnv/*
 systemd/*
+environment.d
+starship.toml

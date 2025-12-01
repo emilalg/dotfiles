@@ -1,5 +1,7 @@
 {
   description = "Unified Emil's Nix Config (Darwin + WSL)";
+  # https://docs.determinate.systems/
+
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
@@ -39,6 +41,7 @@
         pkgs = import nixpkgs {
           system = "x86_64-linux";
           config.allowUnfree = true;
+          cudaSupport = true;
         };
 
         extraSpecialArgs = { inherit inputs; user = wslUser; };
