@@ -12,6 +12,12 @@ in
   home.homeDirectory = lib.mkDefault (if isDarwin then "/Users/${user}" else "/home/${user}");
   home.stateVersion = "24.05"; 
 
+  nix.gc = {
+    automatic = true;
+    frequency = "weekly";
+    options = "--delete-older-than 7d";
+  };
+
   home.packages = with pkgs; [
     # Core
     git
