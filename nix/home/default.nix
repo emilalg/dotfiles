@@ -4,6 +4,48 @@ let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
   configDir = "~/.config/nix";
+
+  # Define the libraries UV/Python binaries usually need
+  nixLdLibraries = with pkgs; [
+    stdenv.cc.cc.lib  # libstdc++
+    zlib
+    glib
+    libGL
+    libxml2
+    openssl
+
+    # Misc
+    libffi
+    readline
+    sqlite
+    ncurses
+    expat
+    tbb
+    numactl
+
+    # Common X11/GUI libs
+    xorg.libX11
+    xorg.libXext
+    xorg.libXrender
+    xorg.libICE
+    xorg.libSM
+
+    libjpeg
+    libpng
+    libtiff
+    libwebp
+
+    # --- Audio (Required for torchaudio) ---
+    libsndfile
+    sox
+    alsa-lib    # <--- CRITICAL for torchaudio
+    libpulseaudio
+
+    # Audio/Video
+    ffmpeg
+    libsndfile
+    sox
+  ];
 in
 {
   imports = [ ./python-env.nix ];
@@ -27,6 +69,10 @@ in
   };
 
   home.packages = with pkgs; [
+    # Core Tools
+    nix-ld        # <--- REQUIRED for the shim to exist
+    uv            # <--- Your tool of choice
+
     git
     home-manager
     nodejs_24
@@ -39,6 +85,20 @@ in
     wslu
     nvtopPackages.nvidia
   ];
+
+  # --- ENVIRONMENT VARIABLES (Merged) ---
+  home.sessionVariables = {
+    EDITOR = "zed";
+    # Set UV to use only managed Python environments
+    UV_PYTHON_PREFERENCE = "only-managed";
+  } // lib.optionalAttrs isLinux {
+    # 1. Point NIX_LD to the dynamic linker path
+    NIX_LD = lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
+
+    # 2. Set the library path for nix-ld to find dependencies
+    #    We also append the WSL lib path here so Python can find CUDA/DirectML
+    NIX_LD_LIBRARY_PATH = lib.makeLibraryPath nixLdLibraries + ":/usr/lib/wsl/lib";
+  };
 
   # --- SHELL CONFIGURATION ---
   programs.zsh = {
@@ -61,36 +121,8 @@ in
         . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
       fi
 
+      # WSL Path Fixes (Only modify PATH, not LD_LIBRARY_PATH)
       ${lib.optionalString isLinux ''
-        # --- THE FIX FOR UV / PYTHON WHEELS ---
-        # As per the Nix-LD FAQ: Python venvs need LD_LIBRARY_PATH set directly.
-        # We build a path containing the standard C++ libraries that wheels expect.
-
-        NIX_LIBS="${lib.makeLibraryPath [
-          pkgs.stdenv.cc.cc.lib # C++ Standard Library
-          pkgs.zlib
-          pkgs.glib
-          pkgs.libGL            # OpenGL/CV2
-          pkgs.libxml2
-          pkgs.openssl
-
-          # --- FIXED X11 LIBRARIES (Prefix with xorg.) ---
-          pkgs.xorg.libX11
-          pkgs.xorg.libXext
-          pkgs.xorg.libXrender
-          pkgs.xorg.libICE
-          pkgs.xorg.libSM
-
-          # Audio/Video
-          pkgs.ffmpeg
-          pkgs.libsndfile
-          pkgs.sox
-        ]}"
-
-        # We Prepend Nix Libs + Append WSL GPU drivers
-        export LD_LIBRARY_PATH="$NIX_LIBS:/usr/lib/wsl/lib:$LD_LIBRARY_PATH"
-
-        # Ensure standard binaries (wslpath, nvidia-smi) are in path
         export PATH=$PATH:/usr/lib/wsl/lib
       ''}
 
@@ -100,7 +132,7 @@ in
 
   programs.starship = { enable = true; enableZshIntegration = true; };
   programs.direnv = { enable = true; enableZshIntegration = true; nix-direnv.enable = true; };
-  home.sessionVariables = { EDITOR = "zed"; };
+  # REMOVED: home.sessionVariables = { EDITOR = "zed"; }; (Merged above)
 
   home.activation = lib.mkIf isLinux {
       linkWindowsHome = lib.hm.dag.entryAfter ["writeBoundary"] ''

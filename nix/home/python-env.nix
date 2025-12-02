@@ -3,7 +3,6 @@
 let
   # Define the Python Bundle
   pythonDataScience = pkgs.python312.withPackages (ps: with ps; [
-    uv
     pip
     numpy
     scipy
