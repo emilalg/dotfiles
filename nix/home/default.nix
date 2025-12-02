@@ -10,29 +10,31 @@ in
 
   home.username = lib.mkDefault user;
   home.homeDirectory = lib.mkDefault (if isDarwin then "/Users/${user}" else "/home/${user}");
-  home.stateVersion = "24.05"; 
+  home.stateVersion = "24.05";
 
   nix.gc = lib.mkIf isLinux {
     automatic = true;
     dates = "weekly"; # <--- RENAMED from 'frequency'
     options = "--delete-older-than 7d";
   };
+  nix.settings.auto-optimise-store = true;
 
   home.packages = with pkgs; [
     # Core
     git
     home-manager # <--- Installs the CLI tool explicitly
-    
+
     # Dev
     nodejs_24
     pyright
     bun
-    
+
     # Utils
     btop
     ripgrep
     jq
     fzf # Fuzzy finder (must have)
+    wslu
 
     # gpu
     nvtopPackages.nvidia
@@ -48,7 +50,7 @@ in
     shellAliases = {
       ll = "ls -l";
       # Robust update command
-      update = if isDarwin 
+      update = if isDarwin
         then "git -C ${configDir} add . && darwin-rebuild switch --flake ${configDir}"
         else "git -C ${configDir} add . && home-manager switch --flake ${configDir}#wsl";
       upgrade = "nix flake update --flake ${configDir} && update";
@@ -64,7 +66,7 @@ in
       ${lib.optionalString isLinux ''
         # 1. The Wiki explicitly says to prefix /usr/lib/wsl/lib
         export LD_LIBRARY_PATH=/usr/lib/wsl/lib:$LD_LIBRARY_PATH
-        
+
         # 2. Also ensure standard binaries (nvidia-smi) are in path
         export PATH=/usr/lib/wsl/lib:$PATH
       ''}
@@ -97,4 +99,23 @@ in
   home.sessionVariables = {
     EDITOR = "zed";
   };
+
+  home.activation = lib.mkIf isLinux {
+      linkWindowsHome = lib.hm.dag.entryAfter ["writeBoundary"] ''
+        # Get the Windows Home Directory dynamically
+        # wslvar USERPROFILE returns "C:\Users\emilalg"
+        # wslpath converts it to "/mnt/c/Users/emilalg"
+        WIN_HOME=$(${pkgs.wslu}/bin/wslpath "$(${pkgs.wslu}/bin/wslvar USERPROFILE)")
+
+        # Create the symlink
+        # $HOME/win_home -> /mnt/c/Users/emilalg
+        # We use 'ln -sfn' to force-update the link if it changes
+        # ln -sfn "$WIN_HOME" "$HOME/win_home"
+
+        # OPTIONAL: If you specifically want it named "emilalg" (dynamic name):
+        WIN_USER=$(basename "$WIN_HOME")
+        ln -sfn "$WIN_HOME" "$HOME/$WIN_USER"
+      '';
+    };
+
 }
