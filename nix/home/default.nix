@@ -12,12 +12,19 @@ in
   home.homeDirectory = lib.mkDefault (if isDarwin then "/Users/${user}" else "/home/${user}");
   home.stateVersion = "24.05";
 
+  nix.package = pkgs.nix;
+
   nix.gc = lib.mkIf isLinux {
     automatic = true;
     dates = "weekly"; # <--- RENAMED from 'frequency'
     options = "--delete-older-than 7d";
   };
   nix.settings.auto-optimise-store = true;
+
+  nix.settings = {
+      experimental-features = [ "nix-command" "flakes" ];
+      warn-dirty = false;
+  };
 
   home.packages = with pkgs; [
     # Core
@@ -102,19 +109,22 @@ in
 
   home.activation = lib.mkIf isLinux {
       linkWindowsHome = lib.hm.dag.entryAfter ["writeBoundary"] ''
-        # Get the Windows Home Directory dynamically
-        # wslvar USERPROFILE returns "C:\Users\emilalg"
-        # wslpath converts it to "/mnt/c/Users/emilalg"
-        WIN_HOME=$(${pkgs.wslu}/bin/wslpath "$(${pkgs.wslu}/bin/wslvar USERPROFILE)")
+        # 1. Vital: Add /usr/bin to PATH so 'wslvar' can find the system 'wslpath'
+        export PATH=$PATH:/usr/bin
 
-        # Create the symlink
-        # $HOME/win_home -> /mnt/c/Users/emilalg
-        # We use 'ln -sfn' to force-update the link if it changes
-        # ln -sfn "$WIN_HOME" "$HOME/win_home"
+        # 2. Get the Windows Home Directory
+        # We use the absolute path for wslpath just to be safe
+        WIN_HOME=$(/usr/bin/wslpath "$(${pkgs.wslu}/bin/wslvar USERPROFILE)")
 
-        # OPTIONAL: If you specifically want it named "emilalg" (dynamic name):
+        # 3. Create the symlink
+        # $HOME/emilalg -> /mnt/c/Users/emilalg
         WIN_USER=$(basename "$WIN_HOME")
-        ln -sfn "$WIN_HOME" "$HOME/$WIN_USER"
+
+        if [ -d "$WIN_HOME" ]; then
+          $DRY_RUN_CMD ln -sfn "$WIN_HOME" "$HOME/$WIN_USER"
+        else
+          echo "Warning: Could not find Windows home at $WIN_HOME"
+        fi
       '';
     };
 
