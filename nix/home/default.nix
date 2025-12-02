@@ -14,25 +14,27 @@ in
 
   nix.package = pkgs.nix;
 
+  # --- GARBAGE COLLECTION ---
   nix.gc = lib.mkIf isLinux {
     automatic = true;
-    dates = "weekly"; # <--- RENAMED from 'frequency'
+    dates = "weekly";
     options = "--delete-older-than 7d";
   };
-  nix.settings.auto-optimise-store = true;
 
+  # --- NIX SETTINGS ---
   nix.settings = {
-      experimental-features = [ "nix-command" "flakes" ];
-      warn-dirty = false;
+    experimental-features = [ "nix-command" "flakes" ];
+    warn-dirty = false;
+    auto-optimise-store = true;
   };
 
   home.packages = with pkgs; [
     # Core
     git
-    home-manager # <--- Installs the CLI tool explicitly
+    home-manager
 
     # Dev
-    nodejs_24
+    nodejs_24 # LTS (Recommended over 24 for stability)
     pyright
     bun
 
@@ -40,10 +42,10 @@ in
     btop
     ripgrep
     jq
-    fzf # Fuzzy finder (must have)
+    fzf
     wslu
 
-    # gpu
+    # GPU
     nvtopPackages.nvidia
   ];
 
@@ -52,7 +54,7 @@ in
     enable = true;
     autosuggestion.enable = true;
     enableCompletion = true;
-    syntaxHighlighting.enable = true; # <--- Makes commands green/red while typing
+    syntaxHighlighting.enable = true;
 
     shellAliases = {
       ll = "ls -l";
@@ -63,7 +65,7 @@ in
       upgrade = "nix flake update --flake ${configDir} && update";
     };
 
-    # Fix Path logic on WSL so 'home-manager' command is found
+    # Fix Path logic so commands are found
     initContent = ''
       # Source Nix environment
       if [ -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
@@ -71,10 +73,7 @@ in
       fi
 
       ${lib.optionalString isLinux ''
-        # 1. The Wiki explicitly says to prefix /usr/lib/wsl/lib
-        export LD_LIBRARY_PATH=/usr/lib/wsl/lib:$LD_LIBRARY_PATH
-
-        # 2. Also ensure standard binaries (nvidia-smi) are in path
+        # Ensure standard binaries (nvidia-smi, wslpath) are in path
         export PATH=/usr/lib/wsl/lib:$PATH
       ''}
 
@@ -89,7 +88,6 @@ in
     enableZshIntegration = true;
     settings = {
       add_newline = true;
-      # Customizing the look slightly
       character = {
         success_symbol = "[➜](bold green)";
         error_symbol = "[➜](bold red)";
@@ -103,10 +101,21 @@ in
     nix-direnv.enable = true;
   };
 
+  # --- GLOBAL ENVIRONMENT VARIABLES ---
   home.sessionVariables = {
     EDITOR = "zed";
+
+    # CRITICAL FIX: Make C++ libs available globally for 'uv', 'pip', and generic wheels
+    LD_LIBRARY_PATH = lib.mkIf isLinux (lib.makeLibraryPath [
+      pkgs.stdenv.cc.cc.lib # libstdc++.so.6
+      pkgs.zlib
+      pkgs.glib
+      pkgs.libGL
+      pkgs.libxml2
+    ] + ":/usr/lib/wsl/lib"); # Append WSL GPU drivers
   };
 
+  # --- AUTOMATION SCRIPT ---
   home.activation = lib.mkIf isLinux {
       linkWindowsHome = lib.hm.dag.entryAfter ["writeBoundary"] ''
         # 1. Vital: Add /usr/bin to PATH so 'wslvar' can find the system 'wslpath'
@@ -127,5 +136,4 @@ in
         fi
       '';
     };
-
 }

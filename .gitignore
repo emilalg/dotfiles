@@ -2,3 +2,4 @@ direnv/*
 systemd/*
 environment.d
 starship.toml
+nix.conf
