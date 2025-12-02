@@ -67,12 +67,24 @@ in
         # We build a path containing the standard C++ libraries that wheels expect.
 
         NIX_LIBS="${lib.makeLibraryPath [
-          pkgs.stdenv.cc.cc.lib # libstdc++.so.6 (The Critical Fix)
+          pkgs.stdenv.cc.cc.lib # C++ Standard Library
           pkgs.zlib
           pkgs.glib
-          pkgs.libGL            # OpenCV / ComfyUI
+          pkgs.libGL            # OpenGL/CV2
           pkgs.libxml2
           pkgs.openssl
+
+          # --- FIXED X11 LIBRARIES (Prefix with xorg.) ---
+          pkgs.xorg.libX11
+          pkgs.xorg.libXext
+          pkgs.xorg.libXrender
+          pkgs.xorg.libICE
+          pkgs.xorg.libSM
+
+          # Audio/Video
+          pkgs.ffmpeg
+          pkgs.libsndfile
+          pkgs.sox
         ]}"
 
         # We Prepend Nix Libs + Append WSL GPU drivers

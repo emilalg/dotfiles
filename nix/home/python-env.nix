@@ -11,10 +11,12 @@ let
     matplotlib
     seaborn
     scikit-learn
-    
+    ipykernel
+
+
     # Conditional packages based on OS (Optional refinement)
     # On Linux/WSL, we might want CUDA support, on Mac we want MPS.
-    # For now, we install the standard torch/jax. 
+    # For now, we install the standard torch/jax.
     # Nix handles the backend logic mostly automatically.
     torch
     torchvision
@@ -22,7 +24,20 @@ let
     jaxlib
     flax
     flaxlib
-    
+    transformers
+    datasets
+    diffusers
+    accelerate
+    einops
+    tokenizers
+
+
+    # scraping
+    beautifulsoup4
+    curl-cffi
+    httpx
+
+
     # Tools
     jupyter
     jupyterlab
@@ -32,6 +47,11 @@ let
     requests
     fastapi
     uvicorn
+
+    # Misc
+    pillow
+    click
+
   ]);
 
   isDarwin = pkgs.stdenv.isDarwin;
@@ -47,7 +67,7 @@ in
   } // lib.optionalAttrs isDarwin {
     # 2. Mac-Only Variables (Merged in only if on Mac)
     PYTORCH_ENABLE_MPS_FALLBACK = "1";
-    
+
   };
 
   home.shellAliases = {
@@ -55,7 +75,7 @@ in
     ipy = "${pythonDataScience}/bin/ipython";
     jlab = "${pythonDataScience}/bin/jupyter-lab";
   };
-  
+
   # Jupyter Config (Simplified for robustness)
   home.file.".jupyter/jupyter_lab_config.py".text = ''
     c = get_config()
