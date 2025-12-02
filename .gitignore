@@ -3,3 +3,4 @@ systemd/*
 environment.d
 starship.toml
 nix.conf
+nix/nix.conf
