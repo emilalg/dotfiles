@@ -12,9 +12,9 @@ in
   home.homeDirectory = lib.mkDefault (if isDarwin then "/Users/${user}" else "/home/${user}");
   home.stateVersion = "24.05"; 
 
-  nix.gc = {
+  nix.gc = lib.mkIf isLinux {
     automatic = true;
-    frequency = "weekly";
+    dates = "weekly"; # <--- RENAMED from 'frequency'
     options = "--delete-older-than 7d";
   };
 
@@ -95,6 +95,6 @@ in
   };
 
   home.sessionVariables = {
-    EDITOR = "code";
+    EDITOR = "zed";
   };
 }
