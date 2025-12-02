@@ -20,6 +20,8 @@ let
     torchvision
     jax
     jaxlib
+    flax
+    flaxlib
     
     # Tools
     jupyter
@@ -39,11 +41,13 @@ in
 
   home.sessionVariables = {
     # 1. Common Variables (Mac + WSL)
+    TF_CPP_MIN_LOG_LEVEL = "2";
     JUPYTER_PATH = "${config.home.homeDirectory}/.local/share/jupyter";
     JAX_ENABLE_X64 = "1";
   } // lib.optionalAttrs isDarwin {
     # 2. Mac-Only Variables (Merged in only if on Mac)
     PYTORCH_ENABLE_MPS_FALLBACK = "1";
+    
   };
 
   home.shellAliases = {
