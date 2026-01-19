@@ -73,9 +73,13 @@ compinit
 # Better completion behavior
 zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+zstyle ':completion:*' list-maxitems 200
+zstyle ':completion:*' list-prompt '%S%M matches%s'
 setopt AUTO_MENU
 setopt COMPLETE_IN_WORD
 setopt ALWAYS_TO_END
+setopt AUTO_LIST
+setopt AUTO_PARAM_SLASH
 
 # Default prompt
 PS1="%n@%m %1~ %# "
@@ -96,6 +100,11 @@ fi
 # opencode
 export PATH=/Users/emilalg/.opencode/bin:$PATH
 alias oc="opencode"
+
+# zed
+if [ -x "/Applications/Zed.app/Contents/MacOS/zed" ]; then
+  export PATH="/Applications/Zed.app/Contents/MacOS:$PATH"
+fi
 
 # Reload zsh and remind about Ghostty
 reload-terminal() {

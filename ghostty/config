@@ -1,4 +1,7 @@
 background = #1f1e1e
 foreground = #ffffff
 command = /bin/zsh
-font-size = 11
+font-size = 12
+window-padding-x = 10
+window-padding-y = 8
+window-padding-balance = true
