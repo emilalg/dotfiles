@@ -14,3 +14,6 @@ stripe/
 .DS_Store
 *.swp
 *.swo
+
+# Zed local state
+zed/prompts/
