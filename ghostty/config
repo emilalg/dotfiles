@@ -1,0 +1,4 @@
+background = #1f1e1e
+foreground = #ffffff
+command = /bin/zsh
+font-size = 11

@@ -1,0 +1,16 @@
+# Zsh runtime
+.zsh_history
+.zsh_sessions/
+.zcompdump
+.zcompdump.*
+.zshrc.zwc
+
+# Sensitive/local service config
+containers/
+gcloud/
+stripe/
+
+# OS/editor noise
+.DS_Store
+*.swp
+*.swo
