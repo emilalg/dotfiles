@@ -6,6 +6,7 @@
 .zshrc.zwc
 
 # Sensitive/local service config
+configstore/
 containers/
 gcloud/
 stripe/
