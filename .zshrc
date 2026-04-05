@@ -50,6 +50,13 @@ alias cc="claude"
 export EDITOR="zed --wait"
 export VISUAL="zed --wait"
 
+# Aliases
+alias ls="ls -la"
+
+# Autosuggestions (install: brew install zsh-autosuggestions)
+[ -r /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ] && \
+  source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
 # Reload zsh and remind about Ghostty
 reload-terminal() {
   source "${ZDOTDIR:-$HOME}/.zshrc"
