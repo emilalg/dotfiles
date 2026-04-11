@@ -6,18 +6,20 @@ Personal dotfiles repo rooted at `~/.config` (`ZDOTDIR`). macOS-first, Homebrew-
 
 - `.zshrc` / `.zprofile` — shell config (completion, autosuggestions, keybindings, PATH, aliases)
 - `ghostty/config` — Ghostty terminal settings
-- `claude/settings.json` — Claude Code settings (symlinked from `~/.claude/settings.json`)
+- `claude/` — Claude Code user config: `settings.json`, `agents/`, `commands/`, `skills/`, `bootstrap.sh` (each symlinked into `~/.claude/`)
 - `git/ignore` — global gitignore
 - `opencode/` — opencode config
 - `zed/` — Zed editor config
 
 ## Claude Code Settings
 
-`~/.claude/settings.json` is a symlink to `claude/settings.json` in this repo. If you reinstall Claude Code or the symlink breaks, restore it:
+`~/.claude/settings.json`, `agents/`, `commands/`, and `skills/` are symlinks into `claude/` in this repo. To restore the symlinks after a Claude Code reinstall or on a fresh machine, run:
 
 ```sh
-ln -sf ~/.config/claude/settings.json ~/.claude/settings.json
+./claude/bootstrap.sh
 ```
+
+It's idempotent and backs up any pre-existing files it would replace (to `~/.claude/<name>.bak-<timestamp>`).
 
 `settings.local.json` is gitignored globally via `git/ignore`.
 
