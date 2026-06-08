@@ -53,6 +53,18 @@ export VISUAL="zed --wait"
 # Aliases
 alias ls="ls -la"
 
+# Start new interactive terminal windows inside a persistent tmux session.
+# Set TMUX_AUTO_START=0 before launching zsh to skip this behavior.
+if [[ -o interactive && -z "$TMUX" && "${TMUX_AUTO_START:-1}" != "0" && "$TERM" != "dumb" ]]; then
+  _tmux_cmd="$(command -v tmux 2>/dev/null)"
+  [[ -z "$_tmux_cmd" && -x /opt/homebrew/bin/tmux ]] && _tmux_cmd="/opt/homebrew/bin/tmux"
+
+  if [[ -n "$_tmux_cmd" ]]; then
+    exec "$_tmux_cmd" new-session -A -s "${TMUX_AUTO_SESSION:-main}"
+  fi
+  unset _tmux_cmd
+fi
+
 # Autosuggestions (install: brew install zsh-autosuggestions)
 [ -r /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ] && \
   source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
